@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HealthAI Pro - Advanced</title>
+<title>HealthAI Pro - Ultimate</title>
 
 <style>
 body{
     margin:0;
     font-family:Arial;
     background:linear-gradient(to right,#e3f2fd,#ffffff);
+    transition:0.3s;
 }
 
 header{
@@ -42,16 +43,15 @@ button{
     border:none;
     cursor:pointer;
     margin-top:5px;
+    border-radius:5px;
 }
 
-button:hover{
-    background:#0d47a1;
-}
+button:hover{ background:#0d47a1; }
 
 .hidden{ display:none; }
 
 .chat-box{
-    height:300px;
+    height:250px;
     overflow-y:auto;
     border:1px solid #ccc;
     padding:10px;
@@ -61,22 +61,26 @@ button:hover{
 .user{ color:#0d47a1; margin:5px 0; }
 .bot{ color:#2e7d32; margin:5px 0; }
 
-.logout-btn{
-    background:#c62828;
-}
+.logout-btn{ background:#c62828; }
+.clear-btn{ background:#6a1b9a; }
+.dark-btn{ background:#424242; }
+.emergency-btn{ background:#d32f2f; }
 
-.clear-btn{
-    background:#6a1b9a;
+/* Dark Mode */
+.dark{
+    background:#121212;
+    color:white;
 }
+.dark .container{ background:#1e1e1e; }
 </style>
 </head>
 <body>
 
 <header>
-<h2>🏥 HealthAI Pro - Advanced Static Version</h2>
+<h2>🏥 HealthAI Pro - Ultimate Version</h2>
 </header>
 
-<!-- AUTH SECTION -->
+<!-- AUTH -->
 <div class="container" id="authSection">
 <h3>Login / Register</h3>
 <input type="text" id="username" placeholder="Username">
@@ -89,6 +93,10 @@ button:hover{
 <!-- DASHBOARD -->
 <div class="container hidden" id="dashboard">
 <h3>Welcome <span id="userDisplay"></span></h3>
+
+<button class="dark-btn" onclick="toggleDark()">🌙 Dark Mode</button>
+<button onclick="startVoice()">🎤 Voice Input</button>
+<button class="emergency-btn" onclick="emergency()">🚨 Emergency</button>
 
 <select id="severity">
 <option value="mild">Mild</option>
@@ -105,11 +113,20 @@ button:hover{
 <button class="clear-btn" onclick="clearChat()">Clear Chat</button>
 <button class="logout-btn" onclick="logout()">Logout</button>
 
+<hr>
+
+<!-- BMI CALCULATOR -->
+<h3>BMI Calculator</h3>
+<input type="number" id="height" placeholder="Height (cm)">
+<input type="number" id="weight" placeholder="Weight (kg)">
+<button onclick="calcBMI()">Calculate BMI</button>
+<p id="bmiResult"></p>
+
 </div>
 
 <script>
 
-/* ================= AUTH SYSTEM ================= */
+/* AUTH SYSTEM */
 
 function register(){
     let user = username.value;
@@ -146,96 +163,83 @@ function showDashboard(){
         authSection.classList.add("hidden");
         dashboard.classList.remove("hidden");
         userDisplay.innerText=user;
+        loadHistory();
     }
 }
 
 showDashboard();
 
-/* ================= SYMPTOM DATABASE ================= */
+/* SYMPTOM DATABASE */
 
 const symptomsDB = {
 
 stomach:{
-mild:"Drink warm water and eat light food.",
-moderate:"Avoid spicy food. Take ORS.",
-severe:"🚨 Severe stomach pain! Consult Gastroenterologist."
+    mild:"Drink warm water, eat light food like khichdi or banana, and avoid oily meals.",
+    moderate:"Avoid spicy food, take ORS, and monitor for bloating or cramps. If persists for 2 days, consult a doctor.",
+    severe:"🚨 Severe stomach pain or persistent vomiting may indicate infection or ulcers. Consult a Gastroenterologist immediately."
 },
 
 headache:{
-mild:"Rest and drink water.",
-moderate:"Reduce screen time.",
-severe:"🚨 Severe headache. Visit Neurologist."
+    mild:"Rest in a quiet room, drink water, and avoid screen exposure.",
+    moderate:"Reduce screen time, check sleep schedule, and try a cold compress on your forehead.",
+    severe:"🚨 Sudden severe headache with nausea or blurred vision needs urgent medical attention. Visit a Neurologist."
 },
 
 fever:{
-mild:"Rest and stay hydrated.",
-moderate:"Monitor temperature regularly.",
-severe:"🚨 High fever! See General Physician."
+    mild:"Stay hydrated, take rest, and wear light clothing.",
+    moderate:"Monitor temperature every 4 hours. Take paracetamol if needed and consult a doctor if fever lasts more than 2 days.",
+    severe:"🚨 High fever above 103°F or with chills and rash requires immediate medical care. See a General Physician."
 },
 
 cold:{
-mild:"Steam inhalation helps.",
-moderate:"Drink warm fluids.",
-severe:"🚨 Breathing issue? Visit ENT."
+    mild:"Steam inhalation and warm fluids like soup or herbal tea can help.",
+    moderate:"Use saline nasal drops, rest well, and avoid cold beverages.",
+    severe:"🚨 Difficulty breathing or chest tightness needs urgent care. Visit an ENT specialist."
 },
 
 cough:{
-mild:"Honey with warm water.",
-moderate:"Avoid cold drinks.",
-severe:"🚨 Persistent cough. Consult doctor."
+    mild:"Honey with warm water, avoid dust exposure, and stay hydrated.",
+    moderate:"Avoid cold drinks, use steam inhalation, and monitor if cough lasts more than a week.",
+    severe:"🚨 Persistent cough with blood or chest pain requires immediate medical evaluation."
 },
 
 chest:{
-mild:"Monitor closely.",
-moderate:"Take rest.",
-severe:"🚨 Possible heart emergency! Seek immediate medical help."
-},
-
-vomiting:{
-mild:"Drink ORS.",
-moderate:"Avoid solid food temporarily.",
-severe:"🚨 Risk of dehydration! Visit hospital."
-},
-
-diarrhea:{
-mild:"Stay hydrated.",
-moderate:"Avoid outside food.",
-severe:"🚨 Immediate medical attention required."
-},
-
-back:{
-mild:"Rest and stretch gently.",
-moderate:"Avoid heavy lifting.",
-severe:"🚨 Severe back pain. Visit Orthopedic."
-},
-
-skin:{
-mild:"Keep area clean.",
-moderate:"Use prescribed ointment.",
-severe:"🚨 Severe rash. Consult Dermatologist."
+    mild:"Monitor closely, avoid heavy exertion, and practice deep breathing.",
+    moderate:"Take rest and avoid stress. If pain spreads to arm or jaw, seek help immediately.",
+    severe:"🚨 Possible heart emergency! Call emergency services immediately."
 },
 
 anxiety:{
-mild:"Deep breathing exercises.",
-moderate:"Talk to someone you trust.",
-severe:"🚨 Severe anxiety. Consult mental health professional."
+    mild:"Practice deep breathing, short walks, and limit caffeine intake.",
+    moderate:"Talk to someone you trust, try meditation, and maintain a regular sleep routine.",
+    severe:"🚨 Severe anxiety or panic attacks affecting daily life require consultation with a mental health professional."
+},
+
+back:{
+    mild:"Gentle stretching, maintain good posture, and use a warm compress.",
+    moderate:"Avoid heavy lifting, try light yoga, and use ergonomic seating.",
+    severe:"🚨 Severe back pain with numbness or leg weakness needs Orthopedic consultation."
+},
+
+skin:{
+    mild:"Keep area clean and dry, avoid scratching, and use mild moisturizer.",
+    moderate:"Use prescribed ointment and avoid allergens or harsh soaps.",
+    severe:"🚨 Rapidly spreading rash, swelling, or fever requires Dermatologist consultation."
 },
 
 tooth:{
-mild:"Rinse with warm salt water.",
-moderate:"Avoid sweets.",
-severe:"🚨 Visit Dentist immediately."
+    mild:"Rinse with warm salt water and maintain oral hygiene.",
+    moderate:"Avoid sweets and hot/cold foods, and schedule a dental checkup.",
+    severe:"🚨 Severe tooth pain or swelling may indicate infection. Visit a Dentist immediately."
 }
 
 };
 
-/* ================= ANALYZE FUNCTION ================= */
+/* ANALYZE */
 
 function analyze(){
-
 let input = symptom.value.toLowerCase();
 let severity = document.getElementById("severity").value;
-let chatBox = document.getElementById("chatBox");
 
 if(!input) return;
 
@@ -246,7 +250,7 @@ let found=false;
 for(let key in symptomsDB){
     if(input.includes(key)){
         let response=symptomsDB[key][severity];
-        chatBox.innerHTML += `<div class='bot'>AI: ${response}</div>`;
+        chatBox.innerHTML += `<div class='bot'>AI: ${response} 👨‍⚕️</div>`;
         saveHistory(input,response);
         found=true;
         break;
@@ -261,7 +265,7 @@ chatBox.scrollTop = chatBox.scrollHeight;
 symptom.value="";
 }
 
-/* ================= CHAT HISTORY ================= */
+/* CHAT HISTORY */
 
 function saveHistory(q,r){
 let history=JSON.parse(localStorage.getItem("chatHistory"))||[];
@@ -269,9 +273,57 @@ history.push({question:q,response:r});
 localStorage.setItem("chatHistory",JSON.stringify(history));
 }
 
+function loadHistory(){
+let history=JSON.parse(localStorage.getItem("chatHistory"))||[];
+history.forEach(item=>{
+chatBox.innerHTML += `<div class='user'>You: ${item.question}</div>`;
+chatBox.innerHTML += `<div class='bot'>AI: ${item.response}</div>`;
+});
+}
+
 function clearChat(){
 localStorage.removeItem("chatHistory");
 chatBox.innerHTML="";
+}
+
+/* DARK MODE */
+
+function toggleDark(){
+    document.body.classList.toggle("dark");
+}
+
+/* VOICE INPUT */
+
+function startVoice(){
+    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+
+    recognition.onresult = function(event){
+        symptom.value = event.results[0][0].transcript;
+    };
+
+    recognition.start();
+}
+
+/* BMI CALCULATOR */
+
+function calcBMI(){
+    let h = height.value / 100;
+    let w = weight.value;
+    if(!h || !w) return;
+
+    let bmi = (w / (h*h)).toFixed(1);
+    let status = bmi<18.5 ? "Underweight" :
+                 bmi<25 ? "Normal" :
+                 bmi<30 ? "Overweight" : "Obese";
+
+    bmiResult.innerText = `BMI: ${bmi} (${status})`;
+}
+
+/* EMERGENCY */
+
+function emergency(){
+    alert("🚨 Call emergency services or visit nearest hospital immediately!");
 }
 
 </script>
