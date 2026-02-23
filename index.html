@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthAI Pro - Advanced</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:linear-gradient(to right,#e3f2fd,#ffffff);
+}
+
+header{
+    background:#1565c0;
+    color:white;
+    text-align:center;
+    padding:15px;
+}
+
+.container{
+    width:95%;
+    max-width:700px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.1);
+}
+
+input, select{
+    width:100%;
+    padding:8px;
+    margin:8px 0;
+}
+
+button{
+    padding:10px;
+    background:#1565c0;
+    color:white;
+    border:none;
+    cursor:pointer;
+    margin-top:5px;
+}
+
+button:hover{
+    background:#0d47a1;
+}
+
+.hidden{ display:none; }
+
+.chat-box{
+    height:300px;
+    overflow-y:auto;
+    border:1px solid #ccc;
+    padding:10px;
+    margin-bottom:10px;
+}
+
+.user{ color:#0d47a1; margin:5px 0; }
+.bot{ color:#2e7d32; margin:5px 0; }
+
+.logout-btn{
+    background:#c62828;
+}
+
+.clear-btn{
+    background:#6a1b9a;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>🏥 HealthAI Pro - Advanced Static Version</h2>
+</header>
+
+<!-- AUTH SECTION -->
+<div class="container" id="authSection">
+<h3>Login / Register</h3>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
+<p id="authMsg"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div class="container hidden" id="dashboard">
+<h3>Welcome <span id="userDisplay"></span></h3>
+
+<select id="severity">
+<option value="mild">Mild</option>
+<option value="moderate">Moderate</option>
+<option value="severe">Severe</option>
+</select>
+
+<input type="text" id="symptom" placeholder="Describe your symptom...">
+
+<button onclick="analyze()">Analyze Symptom</button>
+
+<div class="chat-box" id="chatBox"></div>
+
+<button class="clear-btn" onclick="clearChat()">Clear Chat</button>
+<button class="logout-btn" onclick="logout()">Logout</button>
+
+</div>
+
+<script>
+
+/* ================= AUTH SYSTEM ================= */
+
+function register(){
+    let user = username.value;
+    let pass = password.value;
+
+    if(user && pass){
+        localStorage.setItem(user, pass);
+        authMsg.innerText="Registered Successfully!";
+    } else {
+        authMsg.innerText="Fill all fields!";
+    }
+}
+
+function login(){
+    let user = username.value;
+    let pass = password.value;
+
+    if(localStorage.getItem(user) === pass){
+        sessionStorage.setItem("activeUser", user);
+        showDashboard();
+    } else {
+        authMsg.innerText="Invalid Credentials!";
+    }
+}
+
+function logout(){
+    sessionStorage.removeItem("activeUser");
+    location.reload();
+}
+
+function showDashboard(){
+    let user=sessionStorage.getItem("activeUser");
+    if(user){
+        authSection.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+        userDisplay.innerText=user;
+    }
+}
+
+showDashboard();
+
+/* ================= SYMPTOM DATABASE ================= */
+
+const symptomsDB = {
+
+stomach:{
+mild:"Drink warm water and eat light food.",
+moderate:"Avoid spicy food. Take ORS.",
+severe:"🚨 Severe stomach pain! Consult Gastroenterologist."
+},
+
+headache:{
+mild:"Rest and drink water.",
+moderate:"Reduce screen time.",
+severe:"🚨 Severe headache. Visit Neurologist."
+},
+
+fever:{
+mild:"Rest and stay hydrated.",
+moderate:"Monitor temperature regularly.",
+severe:"🚨 High fever! See General Physician."
+},
+
+cold:{
+mild:"Steam inhalation helps.",
+moderate:"Drink warm fluids.",
+severe:"🚨 Breathing issue? Visit ENT."
+},
+
+cough:{
+mild:"Honey with warm water.",
+moderate:"Avoid cold drinks.",
+severe:"🚨 Persistent cough. Consult doctor."
+},
+
+chest:{
+mild:"Monitor closely.",
+moderate:"Take rest.",
+severe:"🚨 Possible heart emergency! Seek immediate medical help."
+},
+
+vomiting:{
+mild:"Drink ORS.",
+moderate:"Avoid solid food temporarily.",
+severe:"🚨 Risk of dehydration! Visit hospital."
+},
+
+diarrhea:{
+mild:"Stay hydrated.",
+moderate:"Avoid outside food.",
+severe:"🚨 Immediate medical attention required."
+},
+
+back:{
+mild:"Rest and stretch gently.",
+moderate:"Avoid heavy lifting.",
+severe:"🚨 Severe back pain. Visit Orthopedic."
+},
+
+skin:{
+mild:"Keep area clean.",
+moderate:"Use prescribed ointment.",
+severe:"🚨 Severe rash. Consult Dermatologist."
+},
+
+anxiety:{
+mild:"Deep breathing exercises.",
+moderate:"Talk to someone you trust.",
+severe:"🚨 Severe anxiety. Consult mental health professional."
+},
+
+tooth:{
+mild:"Rinse with warm salt water.",
+moderate:"Avoid sweets.",
+severe:"🚨 Visit Dentist immediately."
+}
+
+};
+
+/* ================= ANALYZE FUNCTION ================= */
+
+function analyze(){
+
+let input = symptom.value.toLowerCase();
+let severity = document.getElementById("severity").value;
+let chatBox = document.getElementById("chatBox");
+
+if(!input) return;
+
+chatBox.innerHTML += `<div class='user'>You: ${input} (${severity})</div>`;
+
+let found=false;
+
+for(let key in symptomsDB){
+    if(input.includes(key)){
+        let response=symptomsDB[key][severity];
+        chatBox.innerHTML += `<div class='bot'>AI: ${response}</div>`;
+        saveHistory(input,response);
+        found=true;
+        break;
+    }
+}
+
+if(!found){
+chatBox.innerHTML += `<div class='bot'>AI: Symptom not recognized. Please consult a doctor.</div>`;
+}
+
+chatBox.scrollTop = chatBox.scrollHeight;
+symptom.value="";
+}
+
+/* ================= CHAT HISTORY ================= */
+
+function saveHistory(q,r){
+let history=JSON.parse(localStorage.getItem("chatHistory"))||[];
+history.push({question:q,response:r});
+localStorage.setItem("chatHistory",JSON.stringify(history));
+}
+
+function clearChat(){
+localStorage.removeItem("chatHistory");
+chatBox.innerHTML="";
+}
+
+</script>
+
+</body>
+</html>
